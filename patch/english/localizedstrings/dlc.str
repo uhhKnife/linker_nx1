@@ -1,0 +1,21 @@
+VERSION             "1"
+CONFIG              "C:/trees/cod3/cod3/bin/StringEd.cfg"
+FILENOTES           ""
+
+REFERENCE			UNKNOWN
+LANG_ENGLISH		"Unknown Content Package"
+
+REFERENCE			1
+LANG_ENGLISH		"DLC 1"
+
+REFERENCE			2
+LANG_ENGLISH		"DLC 2"
+
+REFERENCE			PLAYER_DOESNT_HAVE_MAP_PACK
+LANG_ENGLISH		"&&2 disabled!\n&&1 does not have the map pack."
+
+REFERENCE			PLAYLIST_MAPS_NOT_ENABLED
+LANG_ENGLISH		"This playlist requires map packs that are disabled."
+
+REFERENCE			NOTEVERYONEHASREQUIREDDLC
+LANG_ENGLISH		"This playlist requires a map pack that you have, but other members of your party do not have."
