@@ -6,40 +6,72 @@ on:
       - 'v*'
 
 jobs:
-  build-and-release:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux
+            artifact: linker-linux-x86_64.tar.gz
+          - os: windows-latest
+            name: windows
+            artifact: linker-windows-x64.zip
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Build for Linux
+      if: matrix.name == 'linux'
       run: |
         gcc -std=c99 -O2 -Wall -Wextra -o linker linker.c miniz.c
-        tar -czf linker-linux-x86_64.tar.gz linker
+        tar -czf ${{ matrix.artifact }} linker
 
-    - name: Setup MinGW for Windows cross-compilation
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y mingw-w64
+    - name: Setup MSVC
+      if: matrix.name == 'windows'
+      uses: ilammy/msvc-dev-cmd@v1
 
     - name: Build for Windows
+      if: matrix.name == 'windows'
       run: |
-        i686-w64-mingw32-gcc -static -static-libgcc -static-libstdc++ -O2 -Wall -Wextra -o linker.exe linker.c miniz.c
-        zip linker-windows-i686.zip linker.exe
+        cl /O2 /W3 /Fe:linker.exe linker.c miniz.c
+        7z a ${{ matrix.artifact }} linker.exe
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.name }}-build
+        path: ${{ matrix.artifact }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Display structure of downloaded files
+      run: ls -R artifacts
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
-          linker-linux-x86_64.tar.gz
-          linker-windows-i686.zip
+          artifacts/linux-build/linker-linux-x86_64.tar.gz
+          artifacts/windows-build/linker-windows-x64.zip
         body: |
           ## Binaries
           - `linker-linux-x86_64.tar.gz` - Linux x86_64 binary
-          - `linker-windows-i686.zip` - Windows i686 (32-bit) binary
+          - `linker-windows-x64.zip` - Windows x64 binary
 
           Built automatically from tag ${{ github.ref_name }}
         draft: false
         prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
